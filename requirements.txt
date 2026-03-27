@@ -1,5 +1,3 @@
 streamlit
 yfinance
-pandas
-langchain-google-genai
-numpy
+google-generativeai
