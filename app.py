@@ -3,7 +3,7 @@ import yfinance as f
 import google.generativeai as genai
 
 # Forza la lettura della chiave dai Secrets
-api_key = st.secrets.get("GOOGLE_API_KEY") or st.secrets.get("GEMINI_API_KEY")
+api_key = st.secrets["GOOGLE_API_KEY"] or st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
     st.warning("⚠️ Collega la tua Chiave IA nei Secrets di Streamlit.")
@@ -26,6 +26,6 @@ for t in tickers:
         st.write(f"📊 {t}: {last_price:.2f}")
 
 st.subheader("Il Consiglio dell'IA")
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("models/gemini-1.5-flash")
 response = model.generate_content(f"Analizza brevemente questi prezzi e dai un consiglio: {data_summary}")
 st.info(response.text)
