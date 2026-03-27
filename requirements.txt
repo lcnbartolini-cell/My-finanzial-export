@@ -1,0 +1,5 @@
+streamlit
+yfinance
+pandas
+langchain-google-genai
+numpy
