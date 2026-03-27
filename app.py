@@ -19,7 +19,7 @@ data_summary = ""
 
 for t in tickers:
     stock = f.Ticker(t)
-    hist = stock.history(period="1mo")
+    hist = stock.history(period="1d")
     if not hist.empty:
         last_price = hist['Close'].iloc[-1]
         data_summary += f"{t}: {last_price:.2f}\n"
