@@ -26,6 +26,6 @@ for t in tickers:
         st.write(f"📊 {t}: {last_price:.2f}")
 
 st.subheader("Il Consiglio dell'IA")
-model = genai.GenerativeModel("gemini-pro")
+model = genai.GenerativeModel("gemini-1.5-flash")
 response = model.generate_content(f"Analizza brevemente questi prezzi e dai un consiglio: {data_summary}")
 st.info(response.text)
