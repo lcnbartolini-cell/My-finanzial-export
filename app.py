@@ -25,7 +25,7 @@ for t in tickers:
     try:
         stock = yf.Ticker(t)
         # Usiamo 1d per essere veloci e non essere bloccati
-        hist = stock.history(period="1d")
+        hist = stock.history(period="5d")
         if not hist.empty:
             last_price = hist['Close'].iloc[-1]
             data_summary += f"{t}: {last_price:.2f}\n"
