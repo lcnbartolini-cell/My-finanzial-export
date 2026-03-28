@@ -6,30 +6,23 @@ import pandas as pd
 # ========================
 # CONFIGURAZIONE PAGINA
 # ========================
-st.set_page_config(
-    page_title="Financial Pilot AI",
-    page_icon="📊",
-    layout="wide"
-)
-
-st.title("📊 Financial Pilot AI")
+st.set_page_config(page_title="Financial Pilot AI", page_icon="📊", layout="wide")
+st.title("📊 Financial Pilot AI - Global Analysis")
 
 # ========================
-# CHIAVE API (Inserita direttamente per sbloccare)
+# CHIAVE API
 # ========================
 API_KEY_LUCIANO = "AIzaSyCF8NN-QtjuJj29t6LIgwd_ipo29cHftDA"
 genai.configure(api_key=API_KEY_LUCIANO)
 
 # ========================
-# FUNZIONE RECUPERO DATI (Con Cache)
+# FUNZIONE RECUPERO DATI
 # ========================
 @st.cache_data(ttl=300)
 def get_data(ticker):
     try:
         stock = yf.Ticker(ticker)
-        # Prova prima i dati dell'ultimo minuto
         hist = stock.history(period="1d", interval="1m")
-        # Se i mercati sono chiusi (Weekend), prende gli ultimi 5 giorni
         if hist.empty:
             hist = stock.history(period="5d")
         return hist
@@ -37,73 +30,49 @@ def get_data(ticker):
         return pd.DataFrame()
 
 # ========================
-# DASHBOARD MERCATI
+# 1. I TUOI PREFERITI (Fissi)
 # ========================
-tickers = ["NVDA", "BTC-USD", "GC=F", "CL=F"]
-st.subheader("📈 Quotazioni e Variazioni")
+tickers_fissi = ["NVDA", "BTC-USD", "GC=F", "CL=F"]
+st.subheader("🚀 Asset Principali")
+cols = st.columns(len(tickers_fissi))
 
-cols = st.columns(len(tickers))
-data_summary = ""
-
-for i, t in enumerate(tickers):
+for i, t in enumerate(tickers_fissi):
     hist = get_data(t)
     if not hist.empty:
-        last_price = hist['Close'].iloc[-1]
-        prev_price = hist['Close'].iloc[-2] if len(hist) > 1 else last_price
-        change = last_price - prev_price
-        
-        # Etichette più belle per Oro e Petrolio
-        label_display = t
-        if t == "GC=F": label_display = "ORO (Gold)"
-        if t == "CL=F": label_display = "PETROLIO (Crude Oil)"
-
-        cols[i].metric(
-            label=label_display,
-            value=f"{last_price:.2f}",
-            delta=f"{change:.2f}"
-        )
-        data_summary += f"{label_display}: {last_price:.2f} (variazione {change:.2f})\n"
-    else:
-        cols[i].warning(f"Dati {t} non disp.")
+        last_p = hist['Close'].iloc[-1]
+        change = last_p - (hist['Close'].iloc[-2] if len(hist)>1 else last_p)
+        label = t
+        if t == "GC=F": label = "ORO"
+        if t == "CL=F": label = "PETROLIO"
+        cols[i].metric(label=label, value=f"{last_p:.2f}", delta=f"{change:.2f}")
 
 st.divider()
 
 # ========================
-# ANALISI INTELLIGENZA ARTIFICIALE
+# 2. RICERCA GLOBALE (Qualsiasi azione)
 # ========================
-st.subheader("💡 Il Consiglio dell'Analista AI")
+st.subheader("🔍 Ricerca Azione Mondiale")
+user_query = st.text_input("Inserisci Ticker (es: AAPL, RACE.MI, ETH-USD, TSLA)", "AAPL").upper()
 
-if data_summary:
+hist_user = get_data(user_query)
+
+if not hist_user.empty:
+    price = hist_user['Close'].iloc[-1]
+    st.info(f"Analisi attuale per **{user_query}**: {price:.2f} USD/EUR")
+    
+    # Prepara dati per l'IA
+    data_for_ai = f"Asset: {user_query}, Prezzo: {price:.2f}"
+    
+    # IA CONSIGLIO
     try:
-        # CORREZIONE 404: aggiunto "models/" davanti
         model = genai.GenerativeModel("models/gemini-1.5-flash")
-        
-        prompt = f"""
-        Sei un analista finanziario esperto. Analizza questi dati e dai un consiglio:
-        {data_summary}
-        
-        Sii sintetico: indica Trend, Opportunità e un consiglio finale in max 4 righe.
-        """
-        
+        prompt = f"Sei un esperto finanziario. Analizza {data_for_ai}. Dimmi trend, rischi e un consiglio operativo in 3 righe."
         response = model.generate_content(prompt)
-        
-        if response.text:
-            st.info(response.text)
-        else:
-            st.warning("L'IA non ha generato una risposta.")
+        st.success(f"💡 **Consiglio IA:**\n\n{response.text}")
     except Exception as e:
         st.error(f"Errore IA: {e}")
+        
+    # GRAFICO
+    st.line_chart(hist_user['Close'])
 else:
-    st.error("Impossibile analizzare: mancano i dati di mercato.")
-
-# ========================
-# GRAFICI
-# ========================
-st.subheader("📊 Analisi Grafica")
-selected = st.selectbox("Seleziona asset da visualizzare", tickers)
-hist_plot = get_data(selected)
-
-if not hist_plot.empty:
-    st.line_chart(hist_plot['Close'])
-else:
-    st.warning("Grafico non disponibile.")
+    st.warning("Inserisci un ticker valido per vedere il grafico e l'analisi.")
